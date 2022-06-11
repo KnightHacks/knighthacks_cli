@@ -14,7 +14,7 @@ type Api struct {
 }
 
 func (a Api) GetAuthRedirectLink(provider string) (string, error) {
-	b, err := BuildQuery("query Query($provider: Provider!) {getAuthRedirectLink(provider: $provider)}", map[string]string{"provider": provider})
+	b, err := BuildQuery("query Login($provider: Provider!) {getAuthRedirectLink(provider: $provider)}", map[string]string{"provider": provider})
 	if err != nil {
 		return "", err
 	}
@@ -46,8 +46,6 @@ func (a Api) GetAuthRedirectLink(provider string) (string, error) {
 func (a Api) Login(provider string, code string) {
 
 }
-
-func Query()
 
 func BuildQuery(query string, variables map[string]string) ([]byte, error) {
 	return json.Marshal(struct {
