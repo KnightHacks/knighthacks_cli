@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 )
 
-func RunRedirectServer() (code string) {
+func RunRedirectServer(ctx context.Context) (code string) {
+	ctx, cancel := context.WithCancel(ctx)
 	mux := http.NewServeMux()
 	server := http.Server{
 		Addr:    ":8080",
@@ -20,12 +20,15 @@ func RunRedirectServer() (code string) {
 		log.Printf("code=%s\n", code)
 		writer.WriteHeader(200)
 		writer.Write([]byte(fmt.Sprintf("you done did it code=%s", code)))
-		go func() {
-			time.Sleep(time.Second * 5)
-			_ = server.Shutdown(context.Background())
-		}()
+		cancel()
 	})
+	go func() {
+		err := server.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Printf("Error occured while shutting down: %s\n", err)
+		}
+	}()
+	<-ctx.Done()
 
-	_ = server.ListenAndServe()
 	return code
 }

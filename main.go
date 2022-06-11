@@ -45,7 +45,7 @@ func main() {
 							if err != nil {
 								return err
 							}
-							code := RunRedirectServer()
+							code := RunRedirectServer(context.Context)
 
 							loginPayload, err := api.Login(provider, code)
 							exists := loginPayload.AccountExists
