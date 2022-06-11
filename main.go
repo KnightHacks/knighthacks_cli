@@ -33,7 +33,9 @@ func main() {
 						Usage: "uses kh login flow to login the user",
 						Action: func(context *cli.Context) error {
 							log.Println(api.Endpoint)
-							link, err := api.GetAuthRedirectLink("GITHUB")
+							// TODO: Implement provider dynamic-ability
+							provider := "GITHUB"
+							link, err := api.GetAuthRedirectLink(provider)
 							if err != nil {
 								return err
 							}
@@ -45,7 +47,12 @@ func main() {
 							}
 							code := RunRedirectServer()
 
-							api.Login()
+							loginPayload, err := api.Login(provider, code)
+							exists := loginPayload.AccountExists
+							log.Printf("AccountExists=%v\n", exists)
+							if exists {
+								log.Printf("user=%v\n", *loginPayload.User)
+							}
 							return nil
 						},
 					},
