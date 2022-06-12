@@ -48,6 +48,9 @@ func main() {
 							code := RunRedirectServer(context.Context)
 
 							loginPayload, err := api.Login(provider, code)
+							if err != nil {
+								return err
+							}
 							exists := loginPayload.AccountExists
 							log.Printf("AccountExists=%v\n", exists)
 							if exists {
