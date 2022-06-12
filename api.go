@@ -15,7 +15,7 @@ type Api struct {
 	Endpoint string
 }
 
-func (a Api) GetAuthRedirectLink(provider string) (string, error) {
+func (a *Api) GetAuthRedirectLink(provider string) (string, error) {
 	b, err := BuildQuery("query Login($provider: Provider!) {getAuthRedirectLink(provider: $provider)}", map[string]any{"provider": provider})
 	if err != nil {
 		return "", err
@@ -36,7 +36,7 @@ func (a Api) GetAuthRedirectLink(provider string) (string, error) {
 	return parsedResponse.Data.AuthRedirectLink, nil
 }
 
-func (a Api) Login(provider string, code string) (*model.LoginPayload, error) {
+func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
 	b, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id}}}", map[string]any{"provider": provider, "code": code})
 	if err != nil {
 		return nil, err
