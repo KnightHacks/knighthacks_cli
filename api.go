@@ -46,7 +46,7 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, error) {
 }
 
 func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
-	query, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id}}}", map[string]any{"provider": provider, "code": code})
+	query, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id} jwt encryptedOAuthAccessToken}}", map[string]any{"provider": provider, "code": code})
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +68,13 @@ func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
 	return &parsedResponse.Data.Login, nil
 }
 
-func (a *Api) Register(provider string, code string, user model.NewUser) (string, error) {
+func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user model.NewUser) (string, error) {
 	query, err := BuildQuery(
-		"mutation Register($provider: Provider!, $code: String!, $input: NewUser!) {register(code: $code, input: $input, provider: $provider) {id}}",
+		"mutation Register($provider: Provider!, $encryptedOAuthAccessToken: String!, $input: NewUser!) {register(encryptedOAuthAccessToken: $encryptedOAuthAccessToken, input: $input, provider: $provider) {id}}",
 		map[string]any{
-			"provider": provider,
-			"code":     code,
-			"input":    user,
+			"provider":                  provider,
+			"encryptedOAuthAccessToken": encryptedOAuthAccessToken,
+			"input":                     user,
 		},
 	)
 	if err != nil {

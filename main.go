@@ -107,14 +107,29 @@ func main() {
 							}
 							code := RunRedirectServer(context.Context)
 
-							log.Println("Registering account now...")
-
-							user := GetNewUserFromFlags(context)
-							userId, err := api.Register(provider, code, user)
+							loginPayload, err := api.Login(provider, code)
 							if err != nil {
 								return err
 							}
-							log.Printf("Created user with ID=%s", userId)
+							exists := loginPayload.AccountExists
+							log.Printf("AccountExists=%v\n", exists)
+							if exists {
+								log.Printf("user=%v\n", *loginPayload.User)
+							} else {
+								log.Println("Registering account now...")
+
+								log.Printf("loginPayload=%v\n", *loginPayload)
+
+								log.Printf("EncryptedOAuthAccessToken=%s\n", *loginPayload.EncryptedOAuthAccessToken)
+
+								user := GetNewUserFromFlags(context)
+								userId, err := api.Register(provider, *loginPayload.EncryptedOAuthAccessToken, user)
+								if err != nil {
+									return err
+								}
+								log.Printf("Created user with ID=%s", userId)
+
+							}
 
 							return nil
 						},
