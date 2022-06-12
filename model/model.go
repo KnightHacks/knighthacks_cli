@@ -17,8 +17,8 @@ type NewUser struct {
 }
 
 type OAuth struct {
-	Provider    Provider `json:"provider"`
-	AccessToken string   `json:"accessToken"`
+	Provider Provider `json:"provider"`
+	UID      string   `json:"uid"`
 }
 
 // Example:
@@ -30,9 +30,8 @@ type Pronouns struct {
 }
 
 type PronounsInput struct {
-	SubjectivePersonal string `json:"subjectivePersonal"`
-	ObjectivePersonal  string `json:"objectivePersonal"`
-	Reflexive          string `json:"reflexive"`
+	Subjective string `json:"subjective"`
+	Objective  string `json:"objective"`
 }
 
 type User struct {
