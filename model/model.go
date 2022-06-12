@@ -1,5 +1,7 @@
 package model
 
+import "fmt"
+
 type LoginPayload struct {
 	// If false then you must register immediately following this. Else, you are logged in and have access to your own user.
 	AccountExists bool    `json:"accountExists"`
@@ -12,8 +14,8 @@ type NewUser struct {
 	LastName    string         `json:"lastName"`
 	Email       string         `json:"email"`
 	PhoneNumber string         `json:"phoneNumber"`
-	Pronouns    *PronounsInput `json:"pronouns"`
-	Age         *int           `json:"age"`
+	Pronouns    *PronounsInput `json:"pronouns,omitempty"`
+	Age         *int           `json:"age,omitempty"`
 }
 
 type OAuth struct {
@@ -38,12 +40,15 @@ type User struct {
 	ID          string    `json:"id"`
 	FirstName   string    `json:"firstName"`
 	LastName    string    `json:"lastName"`
-	FullName    string    `json:"fullName"`
 	Email       string    `json:"email"`
 	PhoneNumber string    `json:"phoneNumber"`
 	Pronouns    *Pronouns `json:"pronouns"`
 	Age         *int      `json:"age"`
 	OAuth       *OAuth    `json:"oAuth"`
+}
+
+func (u *User) FullName() string {
+	return fmt.Sprintf("%s %s", u.FirstName, u.LastName)
 }
 
 type Provider string
