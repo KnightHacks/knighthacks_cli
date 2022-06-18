@@ -4,6 +4,8 @@ import (
 	"github.com/KnightHacks/knighthacks_cli/model"
 	"github.com/pkg/browser"
 	"github.com/urfave/cli/v2"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -11,10 +13,35 @@ import (
 	"time"
 )
 
-func main() {
+type Config struct {
+	Auth struct {
+		Tokens struct {
+			Refresh string `yaml:"refresh"`
+			Access  string `yaml:"access"`
+		} `yaml:"tokens"`
+	} `yaml:"auth"`
+}
 
+func (c *Config) load(path string) error {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(file, c)
+}
+
+func (c *Config) write(path string) error {
+	marshal, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, marshal, 0644)
+}
+
+func main() {
 	api := Api{Client: &http.Client{Timeout: time.Second * 10}}
 
+	config := Config{}
 	app := &cli.App{
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -24,6 +51,7 @@ func main() {
 				Usage:       "url to backend endpoint",
 				Destination: &api.Endpoint,
 			},
+			&cli.PathFlag{Name: "config", Value: "config.yaml"},
 		},
 		Commands: []*cli.Command{
 			{
@@ -57,6 +85,19 @@ func main() {
 							log.Printf("AccountExists=%v\n", exists)
 							if exists {
 								log.Printf("user=%v\n", *loginPayload.User)
+								configPath := context.Path("config")
+								err = config.load(configPath)
+								if err != nil {
+									return err
+								}
+								config.Auth.Tokens.Access = *loginPayload.AccessToken
+								config.Auth.Tokens.Refresh = *loginPayload.RefreshToken
+
+								err = config.write(configPath)
+								if err != nil {
+									return err
+								}
+								log.Printf("access=%s refresh=%s\n", config.Auth.Tokens.Access, config.Auth.Tokens.Refresh)
 							}
 							return nil
 						},
