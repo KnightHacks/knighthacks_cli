@@ -46,7 +46,7 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, error) {
 }
 
 func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
-	query, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id} jwt encryptedOAuthAccessToken}}", map[string]any{"provider": provider, "code": code})
+	query, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id} accessToken refreshToken encryptedOAuthAccessToken}}", map[string]any{"provider": provider, "code": code})
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +68,9 @@ func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
 	return &parsedResponse.Data.Login, nil
 }
 
-func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user model.NewUser) (string, error) {
+func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user model.NewUser) (*model.RegistrationPayload, error) {
 	query, err := BuildQuery(
-		"mutation Register($provider: Provider!, $encryptedOAuthAccessToken: String!, $input: NewUser!) {register(encryptedOAuthAccessToken: $encryptedOAuthAccessToken, input: $input, provider: $provider) {id}}",
+		"mutation Register($provider: Provider!, $encryptedOAuthAccessToken: String!, $input: NewUser!) {register(encryptedOAuthAccessToken: $encryptedOAuthAccessToken, input: $input, provider: $provider) {user{id} accessToken refreshToken}}",
 		map[string]any{
 			"provider":                  provider,
 			"encryptedOAuthAccessToken": encryptedOAuthAccessToken,
@@ -78,26 +78,24 @@ func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user m
 		},
 	)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	response, err := a.Client.Post(a.Endpoint, "application/json", bytes.NewReader(query))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	var parsedResponse struct {
 		Data struct {
-			Register struct {
-				Id string `json:"id"`
-			} `json:"register"`
+			RegistrationPayload model.RegistrationPayload `json:"register"`
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
 	err = ParseResponse(response.Body, &parsedResponse)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	HandleGraphQLErrors(parsedResponse.Errors)
-	return parsedResponse.Data.Register.Id, nil
+	return &parsedResponse.Data.RegistrationPayload, nil
 }
 
 func HandleGraphQLErrors(errs []GraphQLError) {

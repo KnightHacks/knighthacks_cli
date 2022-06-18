@@ -123,14 +123,14 @@ func main() {
 								log.Printf("EncryptedOAuthAccessToken=%s\n", *loginPayload.EncryptedOAuthAccessToken)
 
 								user := GetNewUserFromFlags(context)
-								userId, err := api.Register(provider, *loginPayload.EncryptedOAuthAccessToken, user)
+								registrationPayload, err := api.Register(provider, *loginPayload.EncryptedOAuthAccessToken, user)
 								if err != nil {
 									return err
 								}
-								log.Printf("Created user with ID=%s", userId)
-
+								log.Printf("Created user with ID=%s", registrationPayload.User.ID)
+								log.Printf("AccessToken=%s\n", registrationPayload.AccessToken)
+								log.Printf("RefreshToken=%s\n", registrationPayload.RefreshToken)
 							}
-
 							return nil
 						},
 					},
