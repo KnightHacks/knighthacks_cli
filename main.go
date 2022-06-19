@@ -6,13 +6,11 @@ import (
 	"github.com/KnightHacks/knighthacks_cli/config"
 	"github.com/urfave/cli/v2"
 	"log"
-	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
-	a := &api.Api{Client: &http.Client{Timeout: time.Second * 10}}
+	a, err := api.NewApi()
 
 	c := &config.Config{}
 	app := &cli.App{
@@ -29,7 +27,7 @@ func main() {
 		Commands: getCommands(a, c),
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatalf("Unable to run CLI, %s\n", err)
 		return

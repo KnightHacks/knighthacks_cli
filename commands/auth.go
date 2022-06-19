@@ -22,7 +22,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					log.Println(a.Endpoint)
 					// TODO: Implement provider dynamic-ability
 					provider := "GITHUB"
-					link, err := a.GetAuthRedirectLink(provider)
+					link, state, err := a.GetAuthRedirectLink(provider)
 					if err != nil {
 						return err
 					}
@@ -34,7 +34,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					}
 					code := api.RunRedirectServer(context.Context)
 
-					loginPayload, err := a.Login(provider, code)
+					loginPayload, err := a.Login(provider, code, state)
 					if err != nil {
 						return err
 					}
@@ -93,7 +93,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					log.Println(a.Endpoint)
 					// TODO: Implement provider dynamic-ability
 					provider := "GITHUB"
-					link, err := a.GetAuthRedirectLink(provider)
+					link, state, err := a.GetAuthRedirectLink(provider)
 					if err != nil {
 						return err
 					}
@@ -105,7 +105,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					}
 					code := api.RunRedirectServer(context.Context)
 
-					loginPayload, err := a.Login(provider, code)
+					loginPayload, err := a.Login(provider, code, state)
 					if err != nil {
 						return err
 					}

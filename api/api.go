@@ -3,13 +3,17 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/KnightHacks/knighthacks_cli/config"
 	"github.com/KnightHacks/knighthacks_cli/model"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"os"
+	"time"
 )
 
 type GraphQLError struct {
@@ -21,14 +25,23 @@ type Api struct {
 	Endpoint string
 }
 
-func (a *Api) GetAuthRedirectLink(provider string) (string, error) {
+func NewApi() (*Api, error) {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Api{Client: &http.Client{Timeout: time.Second * 10, Jar: jar}}, nil
+}
+
+func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 	query, err := BuildQuery("query Login($provider: Provider!) {getAuthRedirectLink(provider: $provider)}", map[string]any{"provider": provider})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	response, err := a.Client.Post(a.Endpoint, "application/json", bytes.NewReader(query))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	var parsedResponse struct {
@@ -40,14 +53,33 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, error) {
 
 	err = ParseResponse(response.Body, &parsedResponse)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	HandleGraphQLErrors(parsedResponse.Errors)
-	return parsedResponse.Data.AuthRedirectLink, nil
+	cookies := response.Cookies()
+	var oauthState string
+	for _, elem := range cookies {
+		if elem.Name == "oauthstate" {
+			oauthState = elem.Value
+			break
+		}
+	}
+	if len(oauthState) == 0 {
+		return "", "", fmt.Errorf("unable to find oauthstate cookie")
+	}
+	oauthState, err = url.QueryUnescape(oauthState)
+	if err != nil {
+		return "", "", err
+	}
+	log.Printf("oauthstate=%s\n", oauthState)
+	return parsedResponse.Data.AuthRedirectLink, oauthState, nil
 }
 
-func (a *Api) Login(provider string, code string) (*model.LoginPayload, error) {
-	query, err := BuildQuery("query Login($code: String!, $provider: Provider!) {login(code: $code, provider: $provider) {accountExists user{id} accessToken refreshToken encryptedOAuthAccessToken}}", map[string]any{"provider": provider, "code": code})
+func (a *Api) Login(provider string, code string, state string) (*model.LoginPayload, error) {
+	query, err := BuildQuery(
+		"query Login($code: String!, $state: String!, $provider: Provider!) {login(code: $code, provider: $provider, state: $state) {accountExists user{id} accessToken refreshToken encryptedOAuthAccessToken}}",
+		map[string]any{"provider": provider, "code": code, "state": state},
+	)
 	if err != nil {
 		return nil, err
 	}
