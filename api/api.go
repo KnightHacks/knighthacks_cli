@@ -1,8 +1,9 @@
-package main
+package api
 
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/KnightHacks/knighthacks_cli/config"
 	"github.com/KnightHacks/knighthacks_cli/model"
 	"io"
 	"io/ioutil"
@@ -98,6 +99,30 @@ func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user m
 	return &parsedResponse.Data.RegistrationPayload, nil
 }
 
+func (a *Api) Me(c *config.Config) (*model.User, error) {
+	query, err := BuildQuery(
+		"query Me {me { id firstName lastName email phoneNumber role age pronouns { subjective objective }}}",
+		map[string]any{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var parsedResponse struct {
+		Data struct {
+			User model.User `json:"me"`
+		} `json:"data"`
+		Errors []GraphQLError `json:"errors"`
+	}
+	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json", "authorization": c.Auth.Tokens.Access}, &parsedResponse)
+
+	if err != nil {
+		return nil, err
+	}
+	HandleGraphQLErrors(parsedResponse.Errors)
+	return &parsedResponse.Data.User, nil
+}
+
 func HandleGraphQLErrors(errs []GraphQLError) {
 	if len(errs) > 0 {
 		log.Println("The following errors occurred when attempting to register an account: ")
@@ -130,4 +155,20 @@ func BuildQuery(query string, variables map[string]any) ([]byte, error) {
 		Query     string         `json:"query"`
 		Variables map[string]any `json:"variables"`
 	}{query, variables})
+}
+
+func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[string]string, responseStruct *T) error {
+	request, err := http.NewRequest("POST", a.Endpoint, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+
+	for key, value := range headers {
+		request.Header.Set(key, value)
+	}
+	response, err := a.Client.Do(request)
+	if err != nil {
+		return err
+	}
+	return ParseResponse(response.Body, responseStruct)
 }
