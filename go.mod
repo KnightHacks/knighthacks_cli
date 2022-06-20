@@ -3,7 +3,7 @@ module github.com/KnightHacks/knighthacks_cli
 go 1.18
 
 require (
-	github.com/KnightHacks/knighthacks_shared v0.0.0-20220620045125-d5f04d37aa98
+	github.com/KnightHacks/knighthacks_shared v0.0.0-20220620015944-75b31634f3f7
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/urfave/cli/v2 v2.10.1
 	gopkg.in/yaml.v3 v3.0.1
