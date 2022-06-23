@@ -155,6 +155,30 @@ func (a *Api) Me(c *config.Config) (*model.User, error) {
 	return &parsedResponse.Data.User, nil
 }
 
+func (a *Api) Delete(c *config.Config, id string) (bool, error) {
+	query, err := BuildQuery(
+		"mutation DeleteUser($userId: ID!) {deleteUser(id: $userId)}",
+		map[string]any{"userId": id},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	var parsedResponse struct {
+		Data struct {
+			Deleted bool `json:"deleteUser"`
+		} `json:"data"`
+		Errors []GraphQLError `json:"errors"`
+	}
+	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json", "authorization": c.Auth.Tokens.Access}, &parsedResponse)
+
+	if err != nil {
+		return false, err
+	}
+	HandleGraphQLErrors(parsedResponse.Errors)
+	return parsedResponse.Data.Deleted, nil
+}
+
 func HandleGraphQLErrors(errs []GraphQLError) {
 	if len(errs) > 0 {
 		log.Println("The following errors occurred when attempting to register an account: ")

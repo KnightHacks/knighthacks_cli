@@ -49,6 +49,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 						}
 						c.Auth.Tokens.Access = *loginPayload.AccessToken
 						c.Auth.Tokens.Refresh = *loginPayload.RefreshToken
+						c.Auth.UserID = loginPayload.User.ID
 
 						err = c.Save(configPath)
 						if err != nil {

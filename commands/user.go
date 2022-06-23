@@ -34,6 +34,27 @@ func GetUserCommand(a *api.Api, c *config.Config) *cli.Command {
 					return nil
 				},
 			},
+			&cli.Command{
+				Name:        "delete",
+				Description: "deletes your currently logged in account",
+				Action: func(context *cli.Context) error {
+					configPath := context.Path("config")
+					err := c.Load(configPath)
+					if err != nil {
+						return err
+					}
+					accessToken := c.Auth.Tokens.Access
+					if len(accessToken) == 0 {
+						return fmt.Errorf("you must first login to execute this command")
+					}
+					me, err := a.Delete(c, c.Auth.UserID)
+					if err != nil {
+						return err
+					}
+					log.Printf("You are = %v\n", me)
+					return nil
+				},
+			},
 		},
 	}
 }

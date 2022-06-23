@@ -11,6 +11,7 @@ type Config struct {
 			Refresh string `yaml:"refresh"`
 			Access  string `yaml:"access"`
 		} `yaml:"tokens"`
+		UserID string `json:"user_id"`
 	} `yaml:"auth"`
 }
 
