@@ -71,7 +71,6 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	log.Printf("oauthstate=%s\n", oauthState)
 	return parsedResponse.Data.AuthRedirectLink, oauthState, nil
 }
 
