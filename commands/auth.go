@@ -12,8 +12,9 @@ import (
 
 func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 	return &cli.Command{
-		Name:  "auth",
-		Usage: "options relating to authentication",
+		Name:    "auth",
+		Aliases: []string{"authentication", "a"},
+		Usage:   "options relating to authentication",
 		Subcommands: []*cli.Command{
 			{
 				Name:  "login",
