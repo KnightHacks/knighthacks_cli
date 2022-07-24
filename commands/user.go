@@ -18,8 +18,7 @@ func GetUserCommand(a *api.Api, c *config.Config) *cli.Command {
 				Name: "me",
 				Action: func(context *cli.Context) error {
 					configPath := context.Path("config")
-					err := c.Load(configPath)
-					if err != nil {
+					if err := c.Load(configPath); err != nil {
 						return err
 					}
 					accessToken := c.Auth.Tokens.Access
@@ -39,8 +38,7 @@ func GetUserCommand(a *api.Api, c *config.Config) *cli.Command {
 				Description: "deletes your currently logged in account",
 				Action: func(context *cli.Context) error {
 					configPath := context.Path("config")
-					err := c.Load(configPath)
-					if err != nil {
+					if err := c.Load(configPath); err != nil {
 						return err
 					}
 					accessToken := c.Auth.Tokens.Access

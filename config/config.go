@@ -1,30 +1,36 @@
 package config
 
 import (
-	"gopkg.in/yaml.v3"
+	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"os"
 )
 
 type Config struct {
 	Auth struct {
 		Tokens struct {
-			Refresh string `yaml:"refresh"`
-			Access  string `yaml:"access"`
-		} `yaml:"tokens"`
+			Refresh string `json:"refresh"`
+			Access  string `json:"access"`
+		} `json:"tokens"`
 		UserID string `json:"user_id"`
-	} `yaml:"auth"`
+	} `json:"auth"`
 }
 
 func (c *Config) Load(path string) error {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(file, c)
+
+	return json.Unmarshal(file, c)
 }
 
 func (c *Config) Save(path string) error {
-	marshal, err := yaml.Marshal(c)
+	marshal, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
