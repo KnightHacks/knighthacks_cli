@@ -21,8 +21,9 @@ type GraphQLError struct {
 }
 
 type Api struct {
-	Client   *http.Client
-	Endpoint string
+	Client    *http.Client
+	Endpoint  string
+	DebugMode bool
 }
 
 func NewApi() (*Api, error) {
@@ -51,7 +52,7 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	err = ParseResponse(response.Body, &parsedResponse)
+	err = ParseResponse(a, response.Body, &parsedResponse)
 	if err != nil {
 		return "", "", err
 	}
@@ -71,7 +72,6 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	log.Printf("oauthstate=%s\n", oauthState)
 	return parsedResponse.Data.AuthRedirectLink, oauthState, nil
 }
 
@@ -83,21 +83,19 @@ func (a *Api) Login(provider string, code string, state string) (*model.LoginPay
 	if err != nil {
 		return nil, err
 	}
-	response, err := a.Client.Post(a.Endpoint, "application/json", bytes.NewReader(query))
-	if err != nil {
-		return nil, err
-	}
 	var parsedResponse struct {
 		Data struct {
 			Login model.LoginPayload `json:"login"`
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	err = ParseResponse(response.Body, &parsedResponse)
+
+	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json"}, &parsedResponse)
 	if err != nil {
 		return nil, err
 	}
 	HandleGraphQLErrors(parsedResponse.Errors)
+
 	return &parsedResponse.Data.Login, nil
 }
 
@@ -113,21 +111,20 @@ func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user m
 	if err != nil {
 		return nil, err
 	}
-	response, err := a.Client.Post(a.Endpoint, "application/json", bytes.NewReader(query))
-	if err != nil {
-		return nil, err
-	}
+
 	var parsedResponse struct {
 		Data struct {
 			RegistrationPayload model.RegistrationPayload `json:"register"`
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	err = ParseResponse(response.Body, &parsedResponse)
+
+	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json"}, &parsedResponse)
 	if err != nil {
 		return nil, err
 	}
 	HandleGraphQLErrors(parsedResponse.Errors)
+
 	return &parsedResponse.Data.RegistrationPayload, nil
 }
 
@@ -155,9 +152,33 @@ func (a *Api) Me(c *config.Config) (*model.User, error) {
 	return &parsedResponse.Data.User, nil
 }
 
+func (a *Api) Delete(c *config.Config, id string) (bool, error) {
+	query, err := BuildQuery(
+		"mutation DeleteUser($userId: ID!) {deleteUser(id: $userId)}",
+		map[string]any{"userId": id},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	var parsedResponse struct {
+		Data struct {
+			Deleted bool `json:"deleteUser"`
+		} `json:"data"`
+		Errors []GraphQLError `json:"errors"`
+	}
+	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json", "authorization": c.Auth.Tokens.Access}, &parsedResponse)
+
+	if err != nil {
+		return false, err
+	}
+	HandleGraphQLErrors(parsedResponse.Errors)
+	return parsedResponse.Data.Deleted, nil
+}
+
 func HandleGraphQLErrors(errs []GraphQLError) {
 	if len(errs) > 0 {
-		log.Println("The following errors occurred when attempting to register an account: ")
+		log.Println("The following errors occurred when attempting to handle your graphql query: ")
 		for _, elem := range errs {
 			log.Printf(elem.Message)
 		}
@@ -170,13 +191,14 @@ func HandleGraphQLErrors(errs []GraphQLError) {
 //		Data struct{} `json:"data,omitempty"`
 //	}
 // the contents of response should be what was previously set with the actual data inside the data struct
-func ParseResponse[T interface{}](body io.ReadCloser, response *T) error {
+func ParseResponse[T interface{}](api *Api, body io.ReadCloser, response *T) error {
 	all, err := ioutil.ReadAll(body)
 	if err != nil {
 		return err
 	}
-	log.Printf("repsonse=%s\n", all)
-
+	if api.DebugMode {
+		log.Printf("repsonse=%s\n", all)
+	}
 	err = json.Unmarshal(all, response)
 	return err
 
@@ -202,5 +224,9 @@ func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[stri
 	if err != nil {
 		return err
 	}
-	return ParseResponse(response.Body, responseStruct)
+	if a.DebugMode {
+		log.Printf("request=%v\n", *request)
+		log.Printf("response=%v\n", *response)
+	}
+	return ParseResponse(a, response.Body, responseStruct)
 }

@@ -12,8 +12,9 @@ import (
 
 func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 	return &cli.Command{
-		Name:  "auth",
-		Usage: "options relating to authentication",
+		Name:    "auth",
+		Aliases: []string{"authentication", "a"},
+		Usage:   "options relating to authentication",
 		Subcommands: []*cli.Command{
 			{
 				Name:  "login",
@@ -38,10 +39,8 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					if err != nil {
 						return err
 					}
-					exists := loginPayload.AccountExists
-					log.Printf("AccountExists=%v\n", exists)
-					if exists {
-						log.Printf("user=%v\n", *loginPayload.User)
+
+					if loginPayload.AccountExists {
 						configPath := context.Path("config")
 						err = c.Load(configPath)
 						if err != nil {
@@ -49,12 +48,17 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 						}
 						c.Auth.Tokens.Access = *loginPayload.AccessToken
 						c.Auth.Tokens.Refresh = *loginPayload.RefreshToken
+						c.Auth.UserID = loginPayload.User.ID
 
 						err = c.Save(configPath)
 						if err != nil {
 							return err
 						}
-						log.Printf("access=%s refresh=%s\n", c.Auth.Tokens.Access, c.Auth.Tokens.Refresh)
+						log.Println("Logged in")
+						log.Printf("Authorization JWT=%s\n", *loginPayload.AccessToken)
+						log.Printf("INFO: Use the JWT and send it in the Authorization header to the backend.")
+					} else {
+						log.Printf("ERR: Unable to login, you must first register!\n")
 					}
 					return nil
 				},
@@ -109,25 +113,19 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					if err != nil {
 						return err
 					}
-					exists := loginPayload.AccountExists
-					log.Printf("AccountExists=%v\n", exists)
-					if exists {
-						log.Printf("user=%v\n", *loginPayload.User)
+
+					log.Printf("%v\n", *loginPayload)
+					if loginPayload.AccountExists {
+						log.Printf("An account already exists with that the %v auth provider!", provider)
 					} else {
 						log.Println("Registering account now...")
-
-						log.Printf("loginPayload=%v\n", *loginPayload)
-
-						log.Printf("EncryptedOAuthAccessToken=%s\n", *loginPayload.EncryptedOAuthAccessToken)
 
 						user := GetNewUserFromFlags(context)
 						registrationPayload, err := a.Register(provider, *loginPayload.EncryptedOAuthAccessToken, user)
 						if err != nil {
 							return err
 						}
-						log.Printf("Created user with ID=%s", registrationPayload.User.ID)
-						log.Printf("AccessToken=%s\n", registrationPayload.AccessToken)
-						log.Printf("RefreshToken=%s\n", registrationPayload.RefreshToken)
+						log.Printf("%v\n", registrationPayload)
 					}
 					return nil
 				},

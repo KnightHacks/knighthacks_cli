@@ -22,7 +22,12 @@ func main() {
 				Usage:       "url to backend endpoint",
 				Destination: &a.Endpoint,
 			},
-			&cli.PathFlag{Name: "config", Value: "config.yaml"},
+			&cli.BoolFlag{
+				Name:        "verbose",
+				Value:       false,
+				Destination: &a.DebugMode,
+			},
+			&cli.PathFlag{Name: "config", Value: "config.json"},
 		},
 		Commands: getCommands(a, c),
 	}
