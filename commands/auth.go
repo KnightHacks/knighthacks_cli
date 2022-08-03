@@ -31,7 +31,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					log.Printf("Opening %s in browser", link)
 					err = browser.OpenURL(link)
 					if err != nil {
-						return err
+						log.Printf("An error occured but we are ignoring it: %v\n", err)
 					}
 					code := api.RunRedirectServer(context.Context)
 
@@ -105,7 +105,7 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 					log.Printf("Opening %s in browser", link)
 					err = browser.OpenURL(link)
 					if err != nil {
-						return err
+						log.Printf("An error occured but we are ignoring it: %v\n", err)
 					}
 					code := api.RunRedirectServer(context.Context)
 
