@@ -55,7 +55,8 @@ func GetAuthCommand(a *api.Api, c *config.Config) *cli.Command {
 							return err
 						}
 						log.Println("Logged in")
-						log.Printf("Authorization JWT=%s\n", *loginPayload.AccessToken)
+						log.Printf("User ID: %s\n", c.Auth.UserID)
+						log.Printf("Authorization JWT=%s\n", c.Auth.Tokens.Access)
 						log.Printf("INFO: Use the JWT and send it in the Authorization header to the backend.")
 					} else {
 						log.Printf("ERR: Unable to login, you must first register!\n")
