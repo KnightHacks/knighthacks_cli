@@ -89,3 +89,4 @@ fabric.properties
 # vendor/
 
 ./knighthacks_cli
+./config.json
