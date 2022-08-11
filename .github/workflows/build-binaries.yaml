@@ -4,6 +4,9 @@ on:
   release:
     types: [ created, published ]
 
+env:
+  GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
 jobs:
   release-linux-amd64:
     name: release linux/amd64
