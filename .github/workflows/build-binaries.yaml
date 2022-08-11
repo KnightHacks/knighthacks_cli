@@ -2,7 +2,7 @@ name: Build Binaries
 
 on:
   release:
-    types: [ created, published ]
+    types: [ created ]
 
 jobs:
   release-linux-amd64:
@@ -23,4 +23,3 @@ jobs:
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           goversion: 1.18
-          compress_assets: false
