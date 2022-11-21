@@ -1,6 +1,6 @@
 module github.com/KnightHacks/knighthacks_cli
 
-go 1.18
+go 1.19
 
 require (
 	github.com/KnightHacks/knighthacks_shared v0.0.0-20221121010043-cf2a1397df2e
