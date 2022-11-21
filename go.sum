@@ -4,6 +4,8 @@ github.com/KnightHacks/knighthacks_shared v0.0.0-20221029020239-4248bfa6f0dd h1:
 github.com/KnightHacks/knighthacks_shared v0.0.0-20221029020239-4248bfa6f0dd/go.mod h1:W6x/SycHYHMTE51Mo1MZeGQJUTJGME5LF3hdPFdGp4c=
 github.com/KnightHacks/knighthacks_shared v0.0.0-20221120025925-541d81e10069 h1:yvEO67PhIBcBO/Yn3Mh2iUPSgVC0az/T3ls7IRg3ZRk=
 github.com/KnightHacks/knighthacks_shared v0.0.0-20221120025925-541d81e10069/go.mod h1:1PTL6VJL44UN/BdfFyxT8GsAa46W2+9C5dDRnfqKJYA=
+github.com/KnightHacks/knighthacks_shared v0.0.0-20221121010043-cf2a1397df2e h1:2s45geYfGUlA0P+OQC9BB05WBKCaooB+TStnGXC6u/c=
+github.com/KnightHacks/knighthacks_shared v0.0.0-20221121010043-cf2a1397df2e/go.mod h1:1PTL6VJL44UN/BdfFyxT8GsAa46W2+9C5dDRnfqKJYA=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 h1:KoWmjvw+nsYOo29YJK9vDA65RGE3NrOnUtO7a+RF9HU=
