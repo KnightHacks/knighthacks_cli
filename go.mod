@@ -1,9 +1,9 @@
 module github.com/KnightHacks/knighthacks_cli
 
-go 1.18
+go 1.19
 
 require (
-	github.com/KnightHacks/knighthacks_shared v0.0.0-20221029020239-4248bfa6f0dd
+	github.com/KnightHacks/knighthacks_shared v0.0.0-20221121010043-cf2a1397df2e
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/urfave/cli/v2 v2.11.1
 )
