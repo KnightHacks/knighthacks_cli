@@ -7,7 +7,6 @@ import (
 	"github.com/KnightHacks/knighthacks_cli/config"
 	"github.com/KnightHacks/knighthacks_cli/model"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -40,10 +39,6 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	response, err := a.Client.Post(a.Endpoint, "application/json", bytes.NewReader(query))
-	if err != nil {
-		return "", "", err
-	}
 
 	var parsedResponse struct {
 		Data struct {
@@ -52,10 +47,11 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	err = ParseResponse(a, response.Body, &parsedResponse)
+	response, err := MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
 	if err != nil {
 		return "", "", err
 	}
+
 	HandleGraphQLErrors(parsedResponse.Errors)
 	cookies := response.Cookies()
 	var oauthState string
@@ -90,7 +86,7 @@ func (a *Api) Login(provider string, code string, state string) (*model.LoginPay
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json"}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +115,7 @@ func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user m
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json"}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +139,7 @@ func (a *Api) Me(c *config.Config) (*model.User, error) {
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json", "authorization": c.Auth.Tokens.Access}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse)
 
 	if err != nil {
 		return nil, err
@@ -167,7 +163,7 @@ func (a *Api) Delete(c *config.Config, id string) (bool, error) {
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	err = MakeRequestWithHeaders(a, query, map[string]string{"Content-Type": "application/json", "authorization": c.Auth.Tokens.Access}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse)
 
 	if err != nil {
 		return false, err
@@ -186,13 +182,15 @@ func HandleGraphQLErrors(errs []GraphQLError) {
 	}
 }
 
-//ParseResponse
+// ParseResponse
+//
 //	var response struct {
 //		Data struct{} `json:"data,omitempty"`
 //	}
+//
 // the contents of response should be what was previously set with the actual data inside the data struct
 func ParseResponse[T interface{}](api *Api, body io.ReadCloser, response *T) error {
-	all, err := ioutil.ReadAll(body)
+	all, err := io.ReadAll(body)
 	if err != nil {
 		return err
 	}
@@ -201,7 +199,6 @@ func ParseResponse[T interface{}](api *Api, body io.ReadCloser, response *T) err
 	}
 	err = json.Unmarshal(all, response)
 	return err
-
 }
 
 func BuildQuery(query string, variables map[string]any) ([]byte, error) {
@@ -211,22 +208,26 @@ func BuildQuery(query string, variables map[string]any) ([]byte, error) {
 	}{query, variables})
 }
 
-func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[string]string, responseStruct *T) error {
+func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[string]string, responseStruct *T) (*http.Response, error) {
 	request, err := http.NewRequest("POST", a.Endpoint, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
 
 	for key, value := range headers {
 		request.Header.Set(key, value)
 	}
+
 	response, err := a.Client.Do(request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if a.DebugMode {
 		log.Printf("request=%v\n", *request)
 		log.Printf("response=%v\n", *response)
 	}
-	return ParseResponse(a, response.Body, responseStruct)
+	return response, ParseResponse(a, response.Body, responseStruct)
 }
