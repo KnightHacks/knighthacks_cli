@@ -47,13 +47,16 @@ func (a *Api) GetAuthRedirectLink(provider string) (string, string, error) {
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	response, err := MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
+	response, err := MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse, nil)
 	if err != nil {
 		return "", "", err
 	}
 
 	HandleGraphQLErrors(parsedResponse.Errors)
 	cookies := response.Cookies()
+	if a.DebugMode {
+		fmt.Printf("cookies=%s\n", cookies)
+	}
 	var oauthState string
 	for _, elem := range cookies {
 		if elem.Name == "oauthstate" {
@@ -86,7 +89,7 @@ func (a *Api) Login(provider string, code string, state string) (*model.LoginPay
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse, map[string]string{"oauthstate": state})
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +118,7 @@ func (a *Api) Register(provider string, encryptedOAuthAccessToken string, user m
 		Errors []GraphQLError `json:"errors"`
 	}
 
-	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{}, &parsedResponse, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +142,7 @@ func (a *Api) Me(c *config.Config) (*model.User, error) {
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse, nil)
 
 	if err != nil {
 		return nil, err
@@ -163,7 +166,7 @@ func (a *Api) Delete(c *config.Config, id string) (bool, error) {
 		} `json:"data"`
 		Errors []GraphQLError `json:"errors"`
 	}
-	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse)
+	_, err = MakeRequestWithHeaders(a, query, map[string]string{"authorization": c.Auth.Tokens.Access}, &parsedResponse, nil)
 
 	if err != nil {
 		return false, err
@@ -208,7 +211,7 @@ func BuildQuery(query string, variables map[string]any) ([]byte, error) {
 	}{query, variables})
 }
 
-func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[string]string, responseStruct *T) (*http.Response, error) {
+func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[string]string, responseStruct *T, cookies map[string]string) (*http.Response, error) {
 	request, err := http.NewRequest("POST", a.Endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -219,6 +222,12 @@ func MakeRequestWithHeaders[T interface{}](a *Api, body []byte, headers map[stri
 
 	for key, value := range headers {
 		request.Header.Set(key, value)
+	}
+
+	if cookies != nil {
+		for k, v := range cookies {
+			request.AddCookie(&http.Cookie{Name: k, Value: v})
+		}
 	}
 
 	response, err := a.Client.Do(request)
