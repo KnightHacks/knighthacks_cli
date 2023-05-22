@@ -17,6 +17,8 @@ Types of Changes:
 
 ## [Unreleased]
 
+## [1.0.10] - 2023-05-22
+
 ## [1.0.9] - 2022-12-18
 
 ## [1.0.8] - 2022-11-21
@@ -39,7 +41,9 @@ Types of Changes:
 
 -   Beginning of the officially recorded history of this repository. A bit of an oversight, but better late than never
 
-[Unreleased]: https://github.com/KnightHacks/knighthacks_cli/compare/1.0.9...HEAD
+[Unreleased]: https://github.com/KnightHacks/knighthacks_cli/compare/1.0.10...HEAD
+
+[1.0.10]: https://github.com/KnightHacks/knighthacks_cli/compare/1.0.9...1.0.10
 
 [1.0.9]: https://github.com/KnightHacks/knighthacks_cli/compare/1.0.8...1.0.9
 
